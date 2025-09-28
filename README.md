@@ -98,7 +98,7 @@ pytest -q
 
 - Swap SQLite for Postgres (`DATABASE_URL` in [`app/config.py`](app/config.py)).
 - Containerize + deploy (ECS/Fargate/K8s).
-- Schedule ingestion (Airflow/Prefect).
+- Schedule ingestion (CRON/Airflow/Prefect).
 - Add observability, authn/z, rate limits.
 - Integrate catalog/lineage (DataHub/Collibra).
 - Add Great Expectations/dbt tests in CI/CD.
