@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from fastapi.responses import StreamingResponse
 import csv, io
+from datetime import date
+from typing import Optional, Annotated
 
 from app.models import Business, Review, User
 from app.schemas import HEADERS
@@ -29,6 +31,27 @@ def stream_csv(dict_rows, headers, filename: str):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
+def validate_review_filters(
+    min_rating: Annotated[Optional[int], Query(ge=1, le=5)] = None,
+    max_rating: Annotated[Optional[int], Query(ge=1, le=5)] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    limit: Annotated[int, Query(gt=0, le=1000)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    if min_rating is not None and max_rating is not None and min_rating > max_rating:
+        raise HTTPException(status_code=422, detail="min_rating cannot exceed max_rating")
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date cannot exceed end_date")
+    return {
+        "min_rating": min_rating,
+        "max_rating": max_rating,
+        "start_date": start_date,
+        "end_date": end_date,
+        "limit": limit,
+        "offset": offset,
+    }
+
 @router.get("/health")
 def health():
     return {"status": "ok"}
@@ -36,30 +59,38 @@ def health():
 @router.get("/reviews/business/{business_id}")
 def reviews_for_business(
     business_id: str,
-    start_date: str | None = Query(default=None, description="ISO date"),
-    end_date: str | None = Query(default=None, description="ISO date"),
-    min_rating: int | None = None,
-    max_rating: int | None = None,
-    limit: int = 1000,
-    offset: int = 0,
+    filters: dict = Depends(validate_review_filters),
     db: Session = Depends(get_db),
 ):
-    items = query_reviews_by_business(db, business_id, start_date, end_date, min_rating, max_rating, limit, offset)
+    items = query_reviews_by_business(
+        db,
+        business_id,
+        filters["start_date"],
+        filters["end_date"],
+        filters["min_rating"],
+        filters["max_rating"],
+        filters["limit"],
+        filters["offset"],
+    )
     dicts = [to_review_dict(x) for x in items]
     return stream_csv(dicts, HEADERS["reviews"], f"reviews_business_{business_id}.csv")
 
 @router.get("/reviews/user/{user_id}")
 def reviews_by_user(
     user_id: str,
-    start_date: str | None = Query(default=None, description="ISO date"),
-    end_date: str | None = Query(default=None, description="ISO date"),
-    min_rating: int | None = None,
-    max_rating: int | None = None,
-    limit: int = 1000,
-    offset: int = 0,
+    filters: dict = Depends(validate_review_filters),
     db: Session = Depends(get_db),
 ):
-    items = query_reviews_by_user(db, user_id, start_date, end_date, min_rating, max_rating, limit, offset)
+    items = query_reviews_by_user(
+        db,
+        user_id,
+        filters["start_date"],
+        filters["end_date"],
+        filters["min_rating"],
+        filters["max_rating"],
+        filters["limit"],
+        filters["offset"],
+    )
     dicts = [to_review_dict(x) for x in items]
     return stream_csv(dicts, HEADERS["reviews"], f"reviews_user_{user_id}.csv")
 
