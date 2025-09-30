@@ -1,5 +1,3 @@
-
-```markdown
 # Design.md
 
 # 📐 Design Document – Trustpilot Data Governance & Compliance Take-Home
