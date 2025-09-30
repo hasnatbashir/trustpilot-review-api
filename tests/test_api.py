@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.ingest import run as ingest_csv
 from app.schemas import HEADERS
+from app import constants as C
 
 client = TestClient(app)
 
@@ -22,43 +23,43 @@ def setup_module(module):
     # Create seed CSV (idempotent)
     df = pd.DataFrame([
         {
-            "review_id": "r1",
-            "user_id": "u1",
-            "user_name": "Alice",
-            "email": "alice@example.com",
-            "business_id": "b1",
-            "business_name": "CoffeeCo",
-            "rating": 5,
-            "title": "Great",
-            "text": "Loved it",
-            "ip_address": "1.1.1.3",
-            "created_at": "2024-01-01T10:00:00Z",
+            C.F_REVIEW_ID: "r1",
+            C.F_USER_ID: "u1",
+            C.F_USER_NAME: "Alice",
+            C.F_EMAIL: "alice@example.com",
+            C.F_BUSINESS_ID: "b1",
+            C.F_BUSINESS_NAME: "CoffeeCo",
+            C.F_RATING: 5,
+            C.F_TITLE: "Great",
+            C.F_TEXT: "Loved it",
+            C.F_IP: "1.1.1.3",
+            C.F_CREATED_AT: "2024-01-01T10:00:00Z",
         },
         {
-            "review_id": "r2",
-            "user_id": "u1",
-            "user_name": "Alice",
-            "email": "alice@example.com",
-            "business_id": "b2",
-            "business_name": "TeaCo",
-            "rating": 3,
-            "title": "Okay",
-            "text": "It was fine",
-            "ip_address": "1.1.1.2",
-            "created_at": "2024-02-01T10:00:00Z",
+            C.F_REVIEW_ID: "r2",
+            C.F_USER_ID: "u1",
+            C.F_USER_NAME: "Alice",
+            C.F_EMAIL: "alice@example.com",
+            C.F_BUSINESS_ID: "b2",
+            C.F_BUSINESS_NAME: "TeaCo",
+            C.F_RATING: 3,
+            C.F_TITLE: "Okay",
+            C.F_TEXT: "It was fine",
+            C.F_IP: "1.1.1.2",
+            C.F_CREATED_AT: "2024-02-01T10:00:00Z",
         },
         {
-            "review_id": "r3",
-            "user_id": "u2",
-            "user_name": "Bob",
-            "email": "bob@example.com",
-            "business_id": "b1",
-            "business_name": "CoffeeCo",
-            "rating": 1,
-            "title": "Bad",
-            "text": "Did not like it",
-            "ip_address": "1.1.1.1",
-            "created_at": "2024-03-01T10:00:00Z",
+            C.F_REVIEW_ID: "r3",
+            C.F_USER_ID: "u2",
+            C.F_USER_NAME: "Bob",
+            C.F_EMAIL: "bob@example.com",
+            C.F_BUSINESS_ID: "b1",
+            C.F_BUSINESS_NAME: "CoffeeCo",
+            C.F_RATING: 1,
+            C.F_TITLE: "Bad",
+            C.F_TEXT: "Did not like it",
+            C.F_IP: "1.1.1.1",
+            C.F_CREATED_AT: "2024-03-01T10:00:00Z",
         },
     ])
     csv_path = "/tmp/data/trustpilot_challenge/data/test_reviews.csv"
@@ -273,17 +274,17 @@ def test_csv_escaping_with_commas_quotes(tmp_path):
     # Append a row with commas and quotes
     import pandas as pd
     df_extra = pd.DataFrame([{
-        "review_id": "r_escape",
-        "user_id": "u1",
-        "user_name": "Alice",
-        "email": "alice@example.com",
-        "business_id": "b1",
-        "business_name": "CoffeeCo",
-        "rating": 4,
-        "title": 'Great, "really"',
-        "text": 'Line1,\n"Quoted", test',
-        "ip_address": "1.1.1.9",
-        "created_at": "2024-04-01T10:00:00Z",
+        C.F_REVIEW_ID: "r_escape",
+        C.F_USER_ID: "u1",
+        C.F_USER_NAME: "Alice",
+        C.F_EMAIL: "alice@example.com",
+        C.F_BUSINESS_ID: "b1",
+        C.F_BUSINESS_NAME: "CoffeeCo",
+        C.F_RATING: 4,
+        C.F_TITLE: 'Great, "really"',
+        C.F_TEXT: 'Line1,\n"Quoted", test',
+        C.F_IP: "1.1.1.9",
+        C.F_CREATED_AT: "2024-04-01T10:00:00Z",
     }])
     df_existing = pd.read_csv("/tmp/data/trustpilot_challenge/data/test_reviews.csv")
     combined = pd.concat([df_existing, df_extra], ignore_index=True)
