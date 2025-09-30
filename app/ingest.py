@@ -28,6 +28,14 @@ from app.constants import (
 
 
 def compute_file_hash(file_path: str) -> str:
+    """Compute SHA-256 hash of a file.
+
+    Args:
+        file_path: Path to the file to hash.
+
+    Returns:
+        Hexadecimal SHA-256 hash string.
+    """
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -36,6 +44,14 @@ def compute_file_hash(file_path: str) -> str:
 
 
 def load_dataframe(path: str) -> pd.DataFrame:
+    """Load CSV into a pandas DataFrame and normalise column names.
+
+    Args:
+        path: Path to CSV file.
+
+    Returns:
+        pandas.DataFrame with renamed columns and parsed `created_at` UTC timestamps where present.
+    """
     df = pd.read_csv(path)
     df = df.rename(columns=RENAME_MAP)
     if F_CREATED_AT in df.columns:
@@ -44,7 +60,17 @@ def load_dataframe(path: str) -> pd.DataFrame:
 
 
 def upsert_dimension(session: Session, model, key_field: str, df: pd.DataFrame, fields: list[str]):
-    """Batch upsert for dimension tables (users, businesses)."""
+    """Batch upsert new rows into a dimension table (users or businesses).
+
+    This function inserts only keys that do not already exist to keep the operation idempotent.
+
+    Args:
+        session: SQLAlchemy Session to use for DB operations.
+        model: SQLAlchemy ORM model class for the target table.
+        key_field: Primary key column name on the model (as in DataFrame).
+        df: DataFrame with rows to insert (must include key_field column).
+        fields: List of additional field names (columns) to insert besides the key.
+    """
     existing_keys = set(
         k for (k,) in session.execute(text(f"SELECT {key_field} FROM {model.__tablename__}")).all()
     )
@@ -59,6 +85,18 @@ def upsert_dimension(session: Session, model, key_field: str, df: pd.DataFrame, 
 
 
 def ingest_csv(db: Session, csv_path: str):
+    """Ingest a reviews CSV into the database.
+
+    Behaviour:
+      - Renames source columns to normalized schema.
+      - Upserts users and businesses (idempotent).
+      - Appends new reviews only if review_id is unseen.
+      - Writes an ingest metadata row.
+
+    Args:
+        db: SQLAlchemy Session to use for ingestion.
+        csv_path: Path to the CSV file to ingest.
+    """
     file_hash = compute_file_hash(csv_path)
     df = load_dataframe(csv_path)
     total_rows = len(df)
@@ -101,6 +139,11 @@ def ingest_csv(db: Session, csv_path: str):
 
 
 def run(csv_path: str):
+    """Convenience entrypoint used by CLI/tests to create tables and ingest a CSV.
+
+    Args:
+        csv_path: Path to CSV file to ingest.
+    """
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as session:
         ingest_csv(session, csv_path=csv_path)

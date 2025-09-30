@@ -11,6 +11,14 @@ Base = declarative_base()
 
 
 def get_db():
+    """Dependency generator that yields a SQLAlchemy Session.
+
+    Usage:
+        as a FastAPI dependency: db: Session = Depends(get_db)
+
+    Yields:
+        sqlalchemy.orm.Session: a database session that will be closed after use.
+    """
     db = SessionLocal()
     try:
         yield db
