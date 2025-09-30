@@ -1,5 +1,3 @@
-# Design.md
-
 # 📐 Design Document – Trustpilot Data Governance & Compliance Take-Home
 
 ## 1) Goals
