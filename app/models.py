@@ -1,9 +1,14 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, func
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .database import Base
+from app.constants import (
+    TBL_USERS,
+    TBL_BUSINESSES,
+    TBL_REVIEWS,
+)
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = TBL_USERS
     user_id: Mapped[str] = mapped_column(String, primary_key=True)
     user_name: Mapped[str | None] = mapped_column(String, nullable=True)
     email: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -12,17 +17,17 @@ class User(Base):
     reviews = relationship("Review", back_populates="user")
 
 class Business(Base):
-    __tablename__ = "businesses"
+    __tablename__ = TBL_BUSINESSES
     business_id: Mapped[str] = mapped_column(String, primary_key=True)
     business_name: Mapped[str | None] = mapped_column(String, nullable=True)
 
     reviews = relationship("Review", back_populates="business")
 
 class Review(Base):
-    __tablename__ = "reviews"
+    __tablename__ = TBL_REVIEWS
     review_id: Mapped[str] = mapped_column(String, primary_key=True)
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.user_id"), index=True)
-    business_id: Mapped[str] = mapped_column(String, ForeignKey("businesses.business_id"), index=True)
+    user_id: Mapped[str] = mapped_column(String, ForeignKey(f"{TBL_USERS}.user_id"), index=True)
+    business_id: Mapped[str] = mapped_column(String, ForeignKey(f"{TBL_BUSINESSES}.business_id"), index=True)
 
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)

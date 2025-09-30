@@ -2,7 +2,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.pii import mask_email
+from app.constants import F_CREATED_AT, F_EMAIL, F_IP, F_USER_NAME
+from app.pii import mask_email, mask_ip, mask_name
 from .models import Business, User, Review
 from .utils import sa_to_dict
 from .schemas import HEADERS
@@ -64,19 +65,24 @@ def to_user_dict(u: User) -> dict:
     row = sa_to_dict(u)
     return {k: row.get(k) for k in HEADERS["users"]}
 
-def to_expanded_review_dict(r: Review, u: User, b: Business, mask_pii: bool) -> dict:
+def to_expanded_review_dict(r, u, b, mask_pii: bool = True) -> dict:
     rd = sa_to_dict(r)
     ud = sa_to_dict(u)
     bd = sa_to_dict(b)
 
-    # PII masking
-    if mask_pii:
-        if "email" in ud and ud["email"]:
-            ud["email"] = mask_email(ud["email"])
-
     # Convert datetime to iso
-    if "created_at" in rd and rd["created_at"]:
-        rd["created_at"] = rd["created_at"].isoformat()
+    if F_CREATED_AT in rd and rd[F_CREATED_AT]:
+        rd[F_CREATED_AT] = rd[F_CREATED_AT].isoformat()
 
     combined = {**rd, **ud, **bd}
+
+    # Apply PII masking
+    if mask_pii:
+        if F_EMAIL in combined:
+            combined[F_EMAIL] = mask_email(combined[F_EMAIL])
+        if F_USER_NAME in combined:
+            combined[F_USER_NAME] = mask_name(combined[F_USER_NAME])
+        if F_IP in combined:
+            combined[F_IP] = mask_ip(combined[F_IP])
+
     return {k: combined.get(k) for k in HEADERS["reviews_expanded"]}

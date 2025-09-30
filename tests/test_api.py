@@ -13,7 +13,7 @@ from io import StringIO
 import pandas as pd
 from fastapi.testclient import TestClient
 from app.main import app
-from app.ingest import run as ingest_run
+from app.ingest import run as ingest_csv
 from app.schemas import HEADERS
 
 client = TestClient(app)
@@ -64,7 +64,7 @@ def setup_module(module):
     csv_path = "/tmp/data/trustpilot_challenge/data/test_reviews.csv"
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     df.to_csv(csv_path, index=False)
-    ingest_run(csv_path)
+    ingest_csv(csv_path)
 
 def parse_csv(text):
     sio = StringIO(text)
@@ -262,7 +262,7 @@ def test_idempotent_ingest():
     csv_path = "/tmp/data/trustpilot_challenge/data/test_reviews.csv"
     before = client.get("/reviews/user/u1")
     count_before = len(parse_csv(before.text))
-    ingest_run(csv_path)
+    ingest_csv(csv_path)
     after = client.get("/reviews/user/u1")
     count_after = len(parse_csv(after.text))
     # If you enforce unique review_id, counts should match
@@ -288,7 +288,7 @@ def test_csv_escaping_with_commas_quotes(tmp_path):
     df_existing = pd.read_csv("/tmp/data/trustpilot_challenge/data/test_reviews.csv")
     combined = pd.concat([df_existing, df_extra], ignore_index=True)
     combined.to_csv(extra_csv, index=False)
-    ingest_run(str(extra_csv))
+    ingest_csv(str(extra_csv))
     r = client.get("/reviews/business/b1/expanded?mask_pii=false")
     assert 'r_escape' in r.text
 
@@ -304,3 +304,11 @@ def test_content_type_all_endpoints():
         resp = client.get(ep)
         assert resp.status_code == 200
         assert resp.headers["content-type"].startswith("text/csv")
+
+def test_reviews_expanded_masked():
+    resp = client.get("/reviews/business/b1/expanded?mask_pii=true")
+    assert resp.status_code == 200
+    csv_text = resp.text
+    assert "***@" in csv_text  # masked email
+    assert "***" in csv_text   # masked name
+    assert "***.***" in csv_text  # masked IP

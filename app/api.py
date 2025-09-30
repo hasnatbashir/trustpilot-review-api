@@ -105,7 +105,7 @@ def user_info(user_id: str, db: Session = Depends(get_db)):
 @router.get("/reviews/business/{business_id}/expanded")
 def reviews_for_business_expanded(
     business_id: str,
-    mask_pii: bool = Query(default=True, description="Mask pii in output"),
+    mask_pii: bool = True,
     limit: int = 1000,
     offset: int = 0,
     db: Session = Depends(get_db),
@@ -115,21 +115,16 @@ def reviews_for_business_expanded(
         .join(User, Review.user_id == User.user_id)
         .join(Business, Review.business_id == Business.business_id)
         .filter(Review.business_id == business_id)
-        .offset(offset)
-        .limit(limit)
-        .all()
+        .offset(offset).limit(limit).all()
     )
-
     dicts = [to_expanded_review_dict(r, u, b, mask_pii) for r, u, b in q]
-
-    headers = list(dicts[0].keys()) if dicts else []
-    return stream_csv(dicts, headers, f"reviews_business_{business_id}_expanded.csv")
+    return stream_csv(dicts, HEADERS["reviews_expanded"], f"reviews_business_{business_id}_expanded.csv")
 
 
 @router.get("/reviews/user/{user_id}/expanded")
 def reviews_by_user_expanded(
     user_id: str,
-    mask_pii: bool = Query(default=True, description="Mask pii in output"),
+    mask_pii: bool = True,
     limit: int = 1000,
     offset: int = 0,
     db: Session = Depends(get_db),
@@ -139,12 +134,7 @@ def reviews_by_user_expanded(
         .join(User, Review.user_id == User.user_id)
         .join(Business, Review.business_id == Business.business_id)
         .filter(Review.user_id == user_id)
-        .offset(offset)
-        .limit(limit)
-        .all()
+        .offset(offset).limit(limit).all()
     )
-
     dicts = [to_expanded_review_dict(r, u, b, mask_pii) for r, u, b in q]
-
-    headers = list(dicts[0].keys()) if dicts else []
-    return stream_csv(dicts, headers, f"reviews_user_{user_id}_expanded.csv")
+    return stream_csv(dicts, HEADERS["reviews_expanded"], f"reviews_user_{user_id}_expanded.csv")

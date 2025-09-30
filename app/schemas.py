@@ -1,9 +1,14 @@
+from app.constants import (
+    F_IP, F_REVIEW_ID, F_USER_ID, F_BUSINESS_ID, F_RATING, F_TITLE,
+    F_TEXT, F_CREATED_AT, F_USER_NAME, F_BUSINESS_NAME, F_EMAIL
+)
+
 HEADERS = {
-    "reviews": ["review_id", "user_id", "business_id", "rating", "title", "text", "ip_address", "created_at"],
-    "users": ["user_id", "user_name", "email", "country"],
+    "reviews": [F_REVIEW_ID, F_USER_ID, F_BUSINESS_ID, F_RATING, F_TITLE, F_TEXT, F_IP, F_CREATED_AT],
+    "users": [F_USER_ID, F_USER_NAME, F_EMAIL],
     "reviews_expanded": [
-        "review_id", "rating", "title", "text", "ip_address", "created_at",
-        "user_id", "user_name", "email", "country",
-        "business_id", "business_name",
+        F_REVIEW_ID, F_RATING, F_TITLE, F_TEXT, F_IP, F_CREATED_AT,
+        F_USER_ID, F_USER_NAME, F_EMAIL,
+        F_BUSINESS_ID, F_BUSINESS_NAME,
     ],
 }
